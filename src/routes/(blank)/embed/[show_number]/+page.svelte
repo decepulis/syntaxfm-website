@@ -10,6 +10,12 @@
 	import { fade } from 'svelte/transition';
 	import { episode_share_status } from '$/state/player.js';
 	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		// Video.js v10 custom elements can only be registered in the browser
+		import('$/lib/player/videojs_elements');
+	});
 
 	let { data } = $props();
 	let { show } = $derived(data);
@@ -36,37 +42,38 @@
 			<AlbumArt is_link={true} {show} />
 
 			{#if browser}
-				<media-controller
-					audio
-					style="--media-range-track-height: 5px; --media-range-thumb-height: 15px; --media-range-thumb-border-radius: 0;	--media-range-track-border-radius: 5px; --media-range-bar-color: var(--primary);--media-background-color: transparent; --media-control-background: transparent; width: 100%; --media-font-family: var(--body-font-family); --media-control-hover-background: transparent; "
-				>
-					<audio slot="media" preload="metadata" crossorigin="anonymous" src={show.url}></audio>
-					<media-control-bar class="media-bar">
-						<div class="media-controls">
-							<media-play-button>
-								<span slot="play" style="--icon_size: 32px;">
-									<Icon name="play" />
-								</span>
-								<span slot="pause" style="--icon_size: 32px;">
-									<Icon name="pause" />
-								</span>
-							</media-play-button>
-						</div>
-						<div class="media-range">
-							<media-time-display></media-time-display>
-							<div class="media-range-bookmarks">
-								<media-time-range
-									style:--media-range-bar-color="var(--white)"
-									style:--media-range-thumb-background="var(--primary)"
-								></media-time-range>
+				<audio-player>
+					<media-container>
+						<audio preload="metadata" crossorigin="anonymous" src={show.url}></audio>
+						<div class="media-bar">
+							<div class="media-controls">
+								<media-play-button>
+									<span class="play-icon" style="--icon_size: 32px;">
+										<Icon name="play" />
+									</span>
+									<span class="pause-icon" style="--icon_size: 32px;">
+										<Icon name="pause" />
+									</span>
+								</media-play-button>
 							</div>
-							<media-duration-display></media-duration-display>
+							<div class="media-range">
+								<media-time type="current"></media-time>
+								<div class="media-range-bookmarks">
+									<media-time-slider>
+										<media-slider-track>
+											<media-slider-fill></media-slider-fill>
+										</media-slider-track>
+										<media-slider-thumb></media-slider-thumb>
+									</media-time-slider>
+								</div>
+								<media-time type="duration"></media-time>
+							</div>
+							<div class="media-sound">
+								<media-playback-rate-button></media-playback-rate-button>
+							</div>
 						</div>
-						<div class="media-sound">
-							<media-playback-rate-button></media-playback-rate-button>
-						</div>
-					</media-control-bar>
-				</media-controller>
+					</media-container>
+				</audio-player>
 			{/if}
 		</div>
 
@@ -106,7 +113,8 @@
 		overflow: hidden;
 		padding: 20px;
 		background-size: contain;
-		background-image: var(--bg-grit-dark),
+		background-image:
+			var(--bg-grit-dark),
 			radial-gradient(farthest-side circle at 50% 0%, #3a006b66 4% 4%, #000 100%);
 	}
 	p {
@@ -138,7 +146,7 @@
 		height: 64px;
 	}
 
-	media-time-range {
+	media-time-slider {
 		width: 100%;
 	}
 	.player-container {
@@ -189,9 +197,12 @@
 		grid-template-columns: [start controls] auto [controls range] 1fr [range sound] auto [sound end];
 		grid-template-rows: 1fr;
 		grid-column: range / range;
+		font-family: var(--body-font-family);
 	}
 
-	media-controller {
+	media-container {
+		display: block;
+		width: 100%;
 		flex-grow: 1;
 	}
 
@@ -202,6 +213,82 @@
 		grid-column: controls / controls;
 		grid-row: 1;
 	}
+
+	/* Video.js v10 buttons are the host element itself (role="button"),
+	   with no default icons — content and cursor are ours to provide. */
+	media-play-button,
+	media-playback-rate-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		cursor: pointer;
+		color: var(--fg);
+	}
+
+	/* Show the play icon until the element upgrades and reports state */
+	media-play-button .pause-icon {
+		display: none;
+	}
+	media-play-button:defined:not([data-paused]) .play-icon {
+		display: none;
+	}
+	media-play-button:defined:not([data-paused]) .pause-icon {
+		display: inline-flex;
+	}
+
+	media-playback-rate-button {
+		font-size: var(--font-size-sm);
+	}
+	/* data-rate is set at runtime, so Svelte would prune this scoped
+	   selector as "unused" — hence :global() */
+	.player-container :global(media-playback-rate-button[data-rate]::after) {
+		content: attr(data-rate) 'x';
+	}
+
+	/* Sliders are compound and headless: track, fill, and thumb are ours to style */
+	media-time-slider {
+		position: relative;
+		display: flex;
+		align-items: center;
+		height: 15px;
+		cursor: pointer;
+		touch-action: none;
+	}
+
+	media-slider-track {
+		position: absolute;
+		right: 0;
+		left: 0;
+		height: 5px;
+		overflow: hidden;
+		background: oklch(var(--whitelch) / 0.2);
+		border-radius: 5px;
+	}
+
+	media-slider-fill {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: var(--media-slider-fill);
+		height: 100%;
+		background: var(--white);
+	}
+
+	media-slider-thumb {
+		position: absolute;
+		left: var(--media-slider-fill);
+		width: 15px;
+		height: 15px;
+		background: var(--primary);
+		transform: translateX(-50%);
+	}
+
+	media-time {
+		padding: 0;
+		font-size: var(--font-size-xs);
+	}
+
 	.embed-actions {
 		display: flex;
 		gap: 10px;
@@ -217,9 +304,5 @@
 
 	:global(a[href^='http']:not(.social-icon, .button, .icon, .naked)::after) {
 		content: '';
-	}
-
-	:global(media-controller button) {
-		padding: 0;
 	}
 </style>

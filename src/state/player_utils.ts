@@ -3,7 +3,7 @@ import type { Show } from '@prisma/client';
 export interface PlayerState {
 	current_show: null | Show;
 	audio: null | HTMLAudioElement;
-	media_controller: null | HTMLAudioElement;
+	media_controller: null | HTMLElement;
 	duration: number;
 	status: 'INITIAL' | 'LOADED' | 'LOADING' | 'PAUSED' | 'PLAYING';
 	initial_load: boolean;
