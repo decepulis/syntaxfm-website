@@ -1,9 +1,10 @@
 import type { Show } from '@prisma/client';
+import type { AudioPlayerElement } from '@videojs/html/audio';
 
 export interface PlayerState {
 	current_show: null | Show;
 	audio: null | HTMLAudioElement;
-	media_controller: null | HTMLAudioElement;
+	player_element: null | AudioPlayerElement;
 	duration: number;
 	status: 'INITIAL' | 'LOADED' | 'LOADING' | 'PAUSED' | 'PLAYING';
 	initial_load: boolean;

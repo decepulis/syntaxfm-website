@@ -1,0 +1,148 @@
+/*
+ * Styles for the Video.js audio controls shared by the site player and the embed player.
+ * Video.js UI elements are unstyled, and their state is exposed as data-* attributes,
+ * so these live in a global stylesheet rather than component-scoped styles.
+ */
+
+audio-player,
+audio-player media-container {
+	display: block;
+}
+
+audio-player {
+	color: var(--fg);
+	font-family: var(--body-font-family);
+}
+
+/* Video.js sets `hidden` on controls the platform can't support, e.g. volume on iOS */
+audio-player [hidden] {
+	display: none !important;
+}
+
+audio-player :is(media-play-button, media-seek-button, media-mute-button) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+}
+
+/* Play / pause icon swap */
+audio-player media-play-button {
+	.pause-icon {
+		display: none;
+	}
+
+	&:not([data-paused]) {
+		.play-icon {
+			display: none;
+		}
+
+		.pause-icon {
+			display: inline-flex;
+		}
+	}
+}
+
+/* Mute icon swap */
+audio-player media-mute-button {
+	media-icon {
+		display: none;
+		width: 18px;
+		height: 18px;
+	}
+
+	&[data-volume-level='high'] .volume-high-icon,
+	&[data-volume-level='medium'] .volume-low-icon,
+	&[data-volume-level='low'] .volume-low-icon,
+	&[data-volume-level='off'] .volume-off-icon {
+		display: inline-flex;
+	}
+}
+
+/* Time displays */
+audio-player media-time {
+	font-size: var(--font-size-xs);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* Sliders */
+audio-player :is(media-time-slider, media-volume-slider) {
+	--track-height: 5px;
+	--thumb-width: 10px;
+	--thumb-height: 15px;
+
+	position: relative;
+	display: flex;
+	align-items: center;
+	height: var(--thumb-height);
+	cursor: pointer;
+	touch-action: none;
+
+	&:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 4px;
+	}
+
+	media-slider-track {
+		position: absolute;
+		inset-inline: 0;
+		height: var(--track-height);
+		overflow: hidden;
+		border-radius: var(--track-height);
+		background: color-mix(in oklch, var(--fg) 20%, transparent);
+	}
+
+	media-slider-buffer,
+	media-slider-fill {
+		position: absolute;
+		inset-block: 0;
+		left: 0;
+	}
+
+	media-slider-buffer {
+		width: var(--media-slider-buffer);
+		background: color-mix(in oklch, var(--fg) 20%, transparent);
+	}
+
+	media-slider-fill {
+		width: var(--media-slider-fill);
+	}
+
+	media-slider-thumb {
+		position: absolute;
+		left: var(--media-slider-fill);
+		width: var(--thumb-width);
+		height: var(--thumb-height);
+		translate: -50% 0;
+	}
+}
+
+audio-player media-time-slider {
+	width: 100%;
+
+	media-slider-fill {
+		background: var(--white);
+	}
+
+	media-slider-thumb {
+		background: var(--primary);
+	}
+}
+
+audio-player media-volume-slider {
+	width: 100px;
+
+	media-slider-fill {
+		background: var(--primary);
+	}
+
+	media-slider-thumb {
+		background: var(--fg);
+	}
+}
