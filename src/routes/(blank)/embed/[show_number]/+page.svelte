@@ -4,6 +4,9 @@
 	import Icon from '$/lib/Icon.svelte';
 	import ListenLinks from '$/lib/ListenLinks.svelte';
 	import AlbumArt from '$/lib/player/AlbumArt.svelte';
+	import PlaybackRateButton from '$/lib/player/PlaybackRateButton.svelte';
+	import '$/lib/player/videojs';
+	import '$/lib/player/player-controls.css';
 	import ShareButton from '$/lib/share/HairButton.svelte';
 	import { Toaster } from 'svelte-french-toast';
 	import ShareActions from '$/lib/share/ShareActions.svelte';
@@ -36,37 +39,39 @@
 			<AlbumArt is_link={true} {show} />
 
 			{#if browser}
-				<media-controller
-					audio
-					style="--media-range-track-height: 5px; --media-range-thumb-height: 15px; --media-range-thumb-border-radius: 0;	--media-range-track-border-radius: 5px; --media-range-bar-color: var(--primary);--media-background-color: transparent; --media-control-background: transparent; width: 100%; --media-font-family: var(--body-font-family); --media-control-hover-background: transparent; "
-				>
-					<audio slot="media" preload="metadata" crossorigin="anonymous" src={show.url}></audio>
-					<media-control-bar class="media-bar">
-						<div class="media-controls">
-							<media-play-button>
-								<span slot="play" style="--icon_size: 32px;">
-									<Icon name="play" />
-								</span>
-								<span slot="pause" style="--icon_size: 32px;">
-									<Icon name="pause" />
-								</span>
-							</media-play-button>
-						</div>
-						<div class="media-range">
-							<media-time-display></media-time-display>
-							<div class="media-range-bookmarks">
-								<media-time-range
-									style:--media-range-bar-color="var(--white)"
-									style:--media-range-thumb-background="var(--primary)"
-								></media-time-range>
+				<audio-player>
+					<media-container>
+						<audio preload="metadata" crossorigin="anonymous" src={show.url}></audio>
+						<div class="media-bar">
+							<div class="media-controls">
+								<media-play-button>
+									<span class="play-icon" style="--icon_size: 32px;">
+										<Icon name="play" />
+									</span>
+									<span class="pause-icon" style="--icon_size: 32px;">
+										<Icon name="pause" />
+									</span>
+								</media-play-button>
 							</div>
-							<media-duration-display></media-duration-display>
+							<div class="media-range">
+								<media-time type="current"></media-time>
+								<div class="media-range-bookmarks">
+									<media-time-slider>
+										<media-slider-track>
+											<media-slider-buffer></media-slider-buffer>
+											<media-slider-fill></media-slider-fill>
+										</media-slider-track>
+										<media-slider-thumb></media-slider-thumb>
+									</media-time-slider>
+								</div>
+								<media-time type="duration"></media-time>
+							</div>
+							<div class="media-sound">
+								<PlaybackRateButton />
+							</div>
 						</div>
-						<div class="media-sound">
-							<media-playback-rate-button></media-playback-rate-button>
-						</div>
-					</media-control-bar>
-				</media-controller>
+					</media-container>
+				</audio-player>
 			{/if}
 		</div>
 
@@ -106,7 +111,8 @@
 		overflow: hidden;
 		padding: 20px;
 		background-size: contain;
-		background-image: var(--bg-grit-dark),
+		background-image:
+			var(--bg-grit-dark),
 			radial-gradient(farthest-side circle at 50% 0%, #3a006b66 4% 4%, #000 100%);
 	}
 	p {
@@ -138,9 +144,6 @@
 		height: 64px;
 	}
 
-	media-time-range {
-		width: 100%;
-	}
 	.player-container {
 		width: 100%;
 		display: flex;
@@ -191,7 +194,7 @@
 		grid-column: range / range;
 	}
 
-	media-controller {
+	audio-player {
 		flex-grow: 1;
 	}
 
@@ -217,9 +220,5 @@
 
 	:global(a[href^='http']:not(.social-icon, .button, .icon, .naked)::after) {
 		content: '';
-	}
-
-	:global(media-controller button) {
-		padding: 0;
 	}
 </style>

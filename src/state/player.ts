@@ -21,7 +21,7 @@ const new_player_state = () => {
 	const initial_state: PlayerState = {
 		current_show: null,
 		audio: null,
-		media_controller: null,
+		player_element: null,
 		duration: 0,
 		status: 'INITIAL',
 		initial_load: true
@@ -112,7 +112,7 @@ const new_player_state = () => {
 
 		// Update state for new incomming show
 		update((state) => {
-			if (state.audio && state.media_controller) {
+			if (state.audio && state.player_element) {
 				state.audio.src = incoming_show.url;
 				state.audio.currentTime = resume_time;
 				state.current_show = incoming_show;
@@ -215,7 +215,7 @@ const new_player_state = () => {
 					state.audio.pause();
 					state.audio.currentTime = 0;
 				}
-				return { ...initial_state, audio: state.audio, media_controller: state.media_controller };
+				return { ...initial_state, audio: state.audio, player_element: state.player_element };
 			});
 		},
 
@@ -241,7 +241,7 @@ const new_player_state = () => {
 					state.audio.pause();
 					state.audio.removeAttribute('src');
 				}
-				return { ...initial_state, audio: state.audio, media_controller: state.media_controller };
+				return { ...initial_state, audio: state.audio, player_element: state.player_element };
 			});
 			player_window_status.set('HIDDEN');
 		},

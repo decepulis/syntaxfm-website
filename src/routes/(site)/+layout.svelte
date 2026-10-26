@@ -1,6 +1,5 @@
 <script lang="ts">
 	import './style.css';
-	import 'media-chrome';
 	import 'youtube-video-element';
 	import { Toaster } from 'svelte-french-toast';
 	import { onNavigate } from '$app/navigation';

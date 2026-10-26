@@ -5,6 +5,10 @@
 	import get_show_path from '$utilities/slug';
 	import Icon from '../Icon.svelte';
 	import ShareButton from '../share/HairButton.svelte';
+	import PlaybackRateButton from './PlaybackRateButton.svelte';
+	import { remember_volume } from './remember_volume';
+	import './videojs';
+	import './player-controls.css';
 	import { onMount } from 'svelte';
 	import type { Show } from '@prisma/client';
 
@@ -17,6 +21,7 @@
 	onMount(() => {
 		// Load latest show by default
 		player.initialize(initial_show);
+		if ($player.player_element) return remember_volume($player.player_element);
 	});
 
 	let mix_max_verb = $derived($player_window_status === 'MINI' ? 'Maximize' : 'Minimize');
@@ -49,62 +54,69 @@
 					>
 				</p>
 			{/if}
-			<media-controller
-				audio
-				nohotkeys
-				bind:this={$player.media_controller}
-				style="--media-range-track-height: 5px; --media-range-thumb-height: 15px; --media-range-thumb-border-radius: 0;	--media-range-track-border-radius: 5px; --media-range-bar-color: var(--primary);--media-background-color: transparent; --media-control-background: transparent; width: 100%; --media-font-family: var(--body-font-family); --media-control-hover-background: transparent; "
-			>
-				<audio
-					ontimeupdate={player.ontimeupdate}
-					onplay={player.onplay}
-					onended={player.onended}
-					onpause={player.onpause}
-					slot="media"
-					bind:this={$player.audio}
-					preload="metadata"
-					crossorigin="anonymous"
-				></audio>
-				{#if $player_window_status === 'ACTIVE'}
-					<media-control-bar class="media-bar">
-						<div class="media-controls">
-							<media-seek-backward-button>
-								<span slot="icon">
+			<audio-player bind:this={$player.player_element}>
+				<media-container>
+					<audio
+						ontimeupdate={player.ontimeupdate}
+						onplay={player.onplay}
+						onended={player.onended}
+						onpause={player.onpause}
+						bind:this={$player.audio}
+						preload="metadata"
+						crossorigin="anonymous"
+					></audio>
+					{#if $player_window_status === 'ACTIVE'}
+						<div class="media-bar">
+							<div class="media-controls">
+								<media-seek-button seconds={-30}>
 									<Icon name="back-30" />
-								</span>
-							</media-seek-backward-button>
-							<media-play-button>
-								<span slot="play" style="--icon_size: 26px;">
-									<Icon name="play" />
-								</span>
-								<span slot="pause" style="--icon_size: 26px;">
-									<Icon name="pause" />
-								</span>
-							</media-play-button>
-							<media-seek-forward-button>
-								<span slot="icon">
+								</media-seek-button>
+								<media-play-button>
+									<span class="play-icon" style="--icon_size: 26px;">
+										<Icon name="play" />
+									</span>
+									<span class="pause-icon" style="--icon_size: 26px;">
+										<Icon name="pause" />
+									</span>
+								</media-play-button>
+								<media-seek-button seconds={30}>
 									<Icon name="forward-30" />
-								</span>
-							</media-seek-forward-button>
-						</div>
-						<div class="media-range">
-							<media-time-display></media-time-display>
-							<div class="media-range-bookmarks">
-								<media-time-range
-									style:--media-range-bar-color="var(--white)"
-									style:--media-range-thumb-background="var(--primary)"
-								></media-time-range>
+								</media-seek-button>
 							</div>
-							<media-duration-display></media-duration-display>
+							<div class="media-range">
+								<media-time type="current"></media-time>
+								<div class="media-range-bookmarks">
+									<media-time-slider>
+										<media-slider-track>
+											<media-slider-buffer></media-slider-buffer>
+											<media-slider-fill></media-slider-fill>
+										</media-slider-track>
+										<media-slider-thumb></media-slider-thumb>
+									</media-time-slider>
+								</div>
+								<media-time type="duration"></media-time>
+							</div>
+							<div class="media-sound">
+								<PlaybackRateButton />
+								<media-mute-button>
+									<media-icon class="volume-high-icon" name="volume-high" aria-hidden="true"
+									></media-icon>
+									<media-icon class="volume-low-icon" name="volume-low" aria-hidden="true"
+									></media-icon>
+									<media-icon class="volume-off-icon" name="volume-off" aria-hidden="true"
+									></media-icon>
+								</media-mute-button>
+								<media-volume-slider>
+									<media-slider-track>
+										<media-slider-fill></media-slider-fill>
+									</media-slider-track>
+									<media-slider-thumb></media-slider-thumb>
+								</media-volume-slider>
+							</div>
 						</div>
-						<div class="media-sound">
-							<media-playback-rate-button></media-playback-rate-button>
-							<media-mute-button></media-mute-button>
-							<media-volume-range></media-volume-range>
-						</div>
-					</media-control-bar>
-				{/if}
-			</media-controller>
+					{/if}
+				</media-container>
+			</audio-player>
 		</div>
 	</div>
 </section>
@@ -123,8 +135,8 @@
 			grid-column: range / range;
 		}
 	}
-	media-controller {
-		flex-grow: 1;
+	audio-player {
+		width: 100%;
 	}
 
 	.media-range {
@@ -169,8 +181,10 @@
 		background-color: var(--player-bg, var(--black));
 	}
 
-	media-time-range {
-		width: 100%;
+	.media-sound {
+		display: flex;
+		align-items: center;
+		gap: 20px;
 	}
 
 	p {
@@ -207,7 +221,6 @@
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
-		--media-control-padding: 0;
 		translate: 0 100% 0;
 		transition: 0.2s ease translate;
 		z-index: 10;
@@ -218,7 +231,7 @@
 		&.MINI {
 			translate: 0 0 0;
 
-			media-controller {
+			audio-player {
 				overflow: hidden;
 				height: 0;
 				position: absolute;
@@ -243,12 +256,6 @@
 				height: max-content;
 				padding: 10px;
 			}
-
-			media-control-bar {
-				display: flex;
-				width: 100%;
-				align-items: center;
-			}
 		}
 	}
 
@@ -264,16 +271,6 @@
 		width: 100%;
 	}
 
-	media-duration-display,
-	media-time-display {
-		padding: 0;
-		font-size: var(--font-size-xs);
-	}
-
-	media-time-display,
-	media-time-range {
-		padding: 0;
-	}
 	button {
 		--button-bg: transparent;
 		--button-fg: var(--fg);
